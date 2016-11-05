@@ -18,7 +18,7 @@ except ImportError, err:
     print "%s Failed to load Module: %s" % (__file__, err)
     sys.exit(1)
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+#logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.basicConfig(level=logging.CRITICAL)
 
 param = settings.settings()
@@ -37,11 +37,10 @@ if param.RPI_Version is not None:
 
 
 def check_process(procname):
-    try:
-        procs = [p.name for p in psutil.process_iter()]
-    except TypeError:
-        procs = [p.name() for p in psutil.process_iter()]
-    return procname in procs
+    if psutil.version_info[0] < 4:
+        return procname in [p.name for p in psutil.process_iter()]
+    else:
+        return procname in [p.name() for p in psutil.process_iter()]  
 
 #def check_process(procname):
 #    ret = False
