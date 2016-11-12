@@ -43,19 +43,6 @@ def check_process(procname):
     else:
         return procname in [p.name() for p in psutil.process_iter()]  
 
-#def check_process(procname):
-#    ret = False
-#    for proc in psutil.process_iter():
-#        try:
-#            if proc.name() == procname:
-#                ret = True
-#                break
-#        except TypeError:
-#            if proc.name == procname:
-#                ret = True
-#                break
-#    return ret
-
 class Matter(object):
     def __init__(self):
         self.starttime = 0
@@ -164,6 +151,11 @@ def main():
     pygame.quit()
 
 class StateMananger(object):
+    """
+    The idea of the pygame following Finite State Machine concept is taken from:
+    https://gist.github.com/iminurnamez/8d51f5b40032f106a847
+    """
+    
     # Statemanager manages States, loads the first state in the
     # constructor and has a option to print things out
     def __init__(self, screen):
