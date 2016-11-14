@@ -44,7 +44,7 @@ fontpath = os.path.join(BaseDir, "res/DejaVuSansMono-Bold.ttf")
 
 # Define finite state machine
 # define state
-# 3 main screens A, B, X, one S (screen saver screen) and one "sub-screen B10 for main B, and one 'exit' status in A    
+# 3 main screens A, B, X, one S (for a saver screen) and one "sub-screen B10 for main B, and one exit 'Ad' status in A    
 states      = ['A', 'Ad', 'B', 'B01', 'X', 'S']
 # define transition between states
 #                  event,  from_state, to_state
@@ -501,7 +501,7 @@ class XScreen(State):
     def update(self):
         pass
 
-# Events can be also hanled locally - this differes from the Screen A and B !!!
+# Events can be also handled locally if needed - this differs from the Screen A and B !!!
     def handle_events(self,events):
         # every State has its own eventmanagment
 
