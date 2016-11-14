@@ -1,47 +1,114 @@
 #!/usr/bin/env python
 # -*- coding: ascii -*-
 try:
-    import sys, os
+    import sys, os, re
     import pygame
     from pygame.locals import *
     from transitions import Machine
     import time
     from Queue import Queue
     import logging
-    import settings
     import animation
     import psutil
-    from subprocess import PIPE, Popen
     from datetime import datetime, timedelta
-    from pyTextRect import render_textrect
+    from subprocess import PIPE, Popen    
 except ImportError, err:
     print "%s Failed to load Module: %s" % (__file__, err)
     sys.exit(1)
 
-#logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-logging.basicConfig(level=logging.CRITICAL)
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+#logging.basicConfig(level=logging.CRITICAL)
 
-param = settings.settings()
+#Define RotarySwitch pins
+A_PIN  = 17 #wiring=0
+B_PIN  = 27 #wiring=2
+SW_PIN = 22 #wiring=3
 
 
-RotQueue = Queue()  # define global que for events
+# Define pygame parameters
+# set up some usefull colors
+ScreenSize = (160,128)
+ScrenSaverTime = 120 #in seconds
+BLACK  =  (  0,   0,   0)
+WHITE  =  (255, 255, 255)
+RED    =  (255,   0,   0)
+GREEN  =  (  0, 255,   0)
+BLUE   =  (  0,   0, 255)
+LBLUE  =  (159, 182, 205)
+YELLOW =  (255, 255,   0)
 
-if param.RPI_Version is not None:
+# animated gif for loading/processing time delay
+BaseDir=os.path.dirname(os.path.realpath(__file__))
+LoadingGIF = os.path.join(BaseDir, "res/loading.gif")
+fontpath = os.path.join(BaseDir, "res/DejaVuSansMono-Bold.ttf") 
+
+# Define finite state machine
+# define state
+# 3 main screens A, B, X, one S (screen saver screen) and one "sub-screen B10 for main B, and one 'exit' status in A    
+states      = ['A', 'Ad', 'B', 'B01', 'X', 'S']
+# define transition between states
+#                  event,  from_state, to_state
+transitions = [
+                   ['R',   'A',   'B'  ],   # turning knob right change from A to B
+                   ['R',   'B',   'X'  ],   # turning knob right change from B to X
+                   ['R',   'X',   'A'  ],   # turning knob right change from X to A (complete loop)
+                   ['L',   'A',   'X'  ],   # turning knob left  change from A to X
+                   ['L',   'X',   'B'  ],   # turning knob right change from X to B
+                   ['L',   'B',   'A'  ],   # turning knob right change from B to A (complete loop)
+                   ['D',   'B',   'B01'],   # pressing knob down in state B switch to B10
+                   ['D',   'B01', 'B'  ],   # pressing knob down in state B10 switch to B
+                   ['D',   'S',   'A'  ],   # press, turn left, right in screensaver leads always to the A state
+                   ['D',   'A',   'Ad' ],   # press down the A state exits to A01 (state wehere the application exits)
+                   ['R',   'S',   'A'  ],
+                   ['L',   'S',   'A'  ]
+                   ]
+
+
+def pi_version():
+
+# Detect the version of the Raspberry Pi.  Returns either 1, 2 or
+# None depending on if it's a Raspberry Pi 1 (model A, B, A+, B+),
+# Raspberry Pi 2 (model B+), or not a Raspberry Pi.
+
+# Check /proc/cpuinfo for the Hardware field value.
+# 2708 is pi 1
+# 2709 is pi 2
+# Anything else is not a pi.
+    with open('/proc/cpuinfo', 'r') as infile:
+        cpuinfo = infile.read()
+    # Match a line like 'Hardware   : BCM2709'
+    match = re.search('^Hardware\s+:\s+(\w+)$', cpuinfo, flags=re.MULTILINE | re.IGNORECASE)
+    if not match:
+        # Couldn't find the hardware, assume it isn't a pi.
+        return None
+    if match.group(1) == 'BCM2708':
+        # Pi 1
+        logging.debug('RPI: ' + match.group(1))
+        return 1
+    elif match.group(1) == 'BCM2709':
+        # Pi 2
+        logging.debug('RPI: ' + match.group(1))
+        return 2
+    else:
+        # Something else, not a pi.
+        return None
+
+#save the pi_function results results into global variable 
+RPI_Version = pi_version()
+
+
+#Define queue for the RotarySwitch events
+RotQueue = Queue()  # define global queue for events
+
+if RPI_Version is not None:
     import RotaryEncoder
-    encoder = RotaryEncoder.RotaryEncoderWorker(param.A_PIN, param.B_PIN, param.SW_PIN, RotQueue)
-    import relay
-    Relay = relay.Relay(param.R_PIN)
+    # create rotary encoder / switch object
+    encoder = RotaryEncoder.RotaryEncoderWorker(A_PIN, B_PIN, SW_PIN, RotQueue)
+    # close the gpio port at extit time    
     import atexit
     @atexit.register
-    def close_gpio():                                                               # close the gpio port at extit time
+    def close_gpio():                                                               
         encoder.Exit()
-
-
-def check_process(procname):
-    if psutil.version_info[0] < 4:
-        return procname in [p.name for p in psutil.process_iter()]
-    else:
-        return procname in [p.name() for p in psutil.process_iter()]  
 
 class Matter(object):
     def __init__(self):
@@ -49,6 +116,8 @@ class Matter(object):
         self.running = True
         self.LineToDisplay = 0
     
+# Define changing the pygame state manager based on the above finite state machine
+       
     def on_enter_A(self, st):
         logging.debug("=> state A")
         st.manager.change(AScreen(st.screen))
@@ -57,42 +126,16 @@ class Matter(object):
         st.manager.change(BScreen(st.screen))
     def on_enter_B10(self, st):
         logging.debug("=> state B10")
-        st.manager.change(B10Screen(st.screen))
-    def on_enter_B11(self, st):
-        logging.debug("=> state B10")
-        st.manager.change(B11Screen(st.screen))                
-    def on_enter_C(self, st):
+        # no pygame screen chnage we stay here at screen B
+        # and the action has to be handle by the B screen
+    def on_enter_X(self, st):
         logging.debug("=> state C")
-        st.manager.change(CScreen(st.screen))
-    def on_enter_D(self, st):
-        logging.debug("=> state D")
-        st.manager.change(DScreen(st.screen))        
-    def on_enter_Bd(self, st):
-        logging.debug("=> state Bd")
-        self.starttime = time.time()
-    def on_enter_Ad(self, st):
-        logging.debug("=> state Ad")
-        self.running = False
-    def on_enter_Dd(self, st):
-        logging.debug("=> state Dd")
-        self.starttime = time.time()
-    def on_enter_Cd(self, st):
-        logging.debug("=> state Cd")
-        self.starttime = time.time()        
+        st.manager.change(XScreen(st.screen))
     def on_enter_S(self, st):
         logging.debug("=> state S")
         st.manager.change(ScreenSaver(st.screen))
                 
 lump = Matter()
-
-# set up some usefull colors
-BLACK  =  (  0,   0,   0)
-WHITE  =  (255, 255, 255)
-RED    =  (255,   0,   0)
-GREEN  =  (  0, 255,   0)
-BLUE   =  (  0,   0, 255)
-LBLUE  =  (159, 182, 205)
-YELLOW =  (255, 255,   0)
 
 def get_cpu_temperature():
     process = Popen(['vcgencmd', 'measure_temp'], stdout=PIPE)
@@ -119,19 +162,17 @@ def bytes2human(n):
 
 def main():
 
-    if param.RPI_Version is not None: # only for RPI point to a new frame buffer display
+    if RPI_Version is not None: # only for RPI point to a new frame buffer display
         os.environ["SDL_FBDEV"] = "/dev/fb1"
         os.environ['SDL_VIDEODRIVER']="fbcon"    
     
-    global screen
     pygame.init()
     timer = pygame.time.Clock()
     pygame.mouse.set_visible(0)
-    screen = pygame.display.set_mode(param.ScreenSize, 0, 32) # screen size taken from settings
+    screen = pygame.display.set_mode(ScreenSize, 0, 32) # screen size taken from settings
    
     #initiate the FSM with states and transition taken from settings, start in state A   
-    machine = Machine(model=lump, states=param.states, transitions=param.transitions, initial='A', ignore_invalid_triggers=True)
-
+    machine = Machine(model=lump, states=states, transitions=transitions, initial='A', ignore_invalid_triggers=True)
     manager = StateMananger(screen)
 
     while lump.running:
@@ -205,7 +246,7 @@ class State(object):
     def handle_events(self, events):
         # every State can have its own event management or can use this ones 
         
-        if param.RPI_Version is not None:
+        if RPI_Version is not None:
             if not(RotQueue.empty()):
                 m=RotQueue.get_nowait()
                 logging.debug('Processed ' + m)
@@ -240,14 +281,14 @@ class State(object):
                     #st.manager.change(BScreen(st.screen))
                     lump.D(self)
                 self.ScreenSaverElapsed = time.time()
-        if not(lump.is_S()) and (time.time() - self.ScreenSaverElapsed > param.ScrenSaverTime): # if not already in Screensaver and time to save passed 
+        if not(lump.is_S()) and (time.time() - self.ScreenSaverElapsed > ScrenSaverTime): # if not already in Screensaver and time to save passed 
             logging.debug(' => screen saver')
             lump.to_S(self)              
                                         
         return True      
 
 # I recommend loading those classes from another
-# file/module so you don't die a painful death..
+# file/module so you don't die a painful death... but for the sake of example let keep all in one file
 
 class AScreen(State):
 
@@ -269,7 +310,7 @@ class AScreen(State):
 
         self.t0 = time.time()
 
-        if param.RPI_Version is not None:
+        if RPI_Version is not None:
             self.cpu_temperature = get_cpu_temperature()
         else:
             self.cpu_temperature = 0.0
@@ -285,7 +326,7 @@ class AScreen(State):
 
         # A whole Block just to display the Text ...
         #self.SmallFont1 = pygame.font.SysFont(None, self.TSize1)
-        self.SmallFont1 = pygame.font.Font(param.fontpath, 12)
+        self.SmallFont1 = pygame.font.Font(fontpath, 12)
         self.SF1Y = self.SmallFont1.size("X")[1]+2
         
         # Render the text
@@ -297,7 +338,7 @@ class AScreen(State):
     def render(self, screen):
         # Rendering the State
         if time.time() - self.t0 > 4:
-            if param.RPI_Version is not None:
+            if RPI_Version is not None:
                 self.cpu_temperature = get_cpu_temperature()
             else:
                 self.cpu_temperature = 0.0
@@ -358,10 +399,10 @@ class AScreen(State):
         self.screen.blit(THDD,  RHDD)
         self.screen.blit(TNES,  RNES)
         self.screen.blit(TNER,  RNER)
-    
+
         if lump.is_Ad():
             lump.running = False
-
+    
     def update(self):
         pass
 
@@ -371,218 +412,37 @@ class BScreen(State):
 
         logging.debug('Init Bscreen')
 
-        self.name = "TVHead"
-        self.description = "TVHeadend On/Off"
-        logging.debug('B - TVHead')
-        
-        self.processing = animation.GIFImage(param.LoadingGIF)
-        self.TVStatus = check_process(param.TVProcname)
-        if self.TVStatus:
-            self.screen.blit(param.tvon, (0,0) )
-        else:
-            self.screen.blit(param.tvoff, (0,0) )
-        self.CommandCMD    = None      # to monitor daemon start
-        self.ProcessingCMD = False     # to stay in monitoring process
-        self.TimeCMD       = 0         # timeout for command CMD
+        self.name = "Second Screen B"
+        self.description = "Second Screen"
+        logging.debug('Second B Screen Entered')
+
+        self.font = pygame.font.SysFont("", 20)
+        self.text1 = self.font.render('Press Knob', True, BLACK, YELLOW)
+        self.text1Rect = self.text1.get_rect()
+        self.text1Rect.centerx = self.screen.get_rect().centerx
+        self.text1Rect.centery = self.screen.get_rect().centery-20
+        self.text2 = self.font.render('Press again', True,  YELLOW, BLACK)
+        self.text1Rect = self.text1.get_rect()
+        self.text2Rect = self.text2.get_rect()
+        self.text1Rect.centerx = self.screen.get_rect().centerx
+        self.text1Rect.centery = self.screen.get_rect().centery-20
+        self.text2Rect.centerx = 120
+        self.text2Rect.centery = 100        
+
+        self.processing = animation.GIFImage(LoadingGIF)
 
     def render(self, screen):
-        if lump.is_Bd():
-            if self.ProcessingCMD:
-                self.processing.render(screen, (5, 11))
-                StatusCMD = self.CommandCMD.poll()
-                if time.time()-self.TimeCMD > 240: # 4m timeout 120s for stopping the service
-                    if self.TVStatus and (param.RPI_Version is not None): Relay.RelayChange(0)
-                    lump.to_B(self)
-                elif StatusCMD is not None:
-                    logging.debug(param.TVProcname + ' returned ' + str(StatusCMD))
-                    if (self.TVStatus) and (param.RPI_Version is not None): Relay.RelayChange(0)
-                    lump.to_B(self)
-            else:
-                if self.TVStatus: # now on then switch it off
-                    logging.debug('TVHead - switching OFF'  + param.TVDaemonStop)
-                    self.CommandCMD = Popen(param.TVDaemonStop, shell=True)
-                else: # now off then switch it on
-                    if param.RPI_Version is not None:
-                        Relay.RelayChange(1)
-                        #time.sleep(1)
-                    logging.debug('TVHead - switching ON ' + param.TVDaemonStart)
-                    self.CommandCMD = Popen(param.TVDaemonStart, shell=True)
-                self.ProcessingCMD = True
-                self.TimeCMD = time.time()
+        # check if the finite state machine is in B01 state
+        if lump.is_B01():
+            screen.fill(RED)
+            self.processing.render(screen, (30, 10))
+            self.screen.blit(self.text2, self.text2Rect)
+        else: # standard B state
+            screen.fill(LBLUE)
+            self.screen.blit(self.text1, self.text1Rect)
 
     def update(self):
         pass
-
-#    def handle_events(self,events):
-#        return handle_all_events(self, events)
-
-class B10Screen(State):
-    def __init__(self, screen):
-        State.__init__(self, screen)
-
-        logging.debug('TV Head Status Log')
-
-        self.name = "TVHeadStatus"
-        self.description = "TVHeadend Status Display"
-        logging.debug('B1 - TVHead')
-        
-        lump.LineToDisplay = 1
-        
-        screen.fill(BLACK)
-        
-    def render(self, screen):
-        my_font = pygame.font.SysFont(None, 14)
-        my_string = "No log data found"
-        for line in reversed(open("/var/log/syslog").readlines()):
-            if param.TVProcname in line.rstrip().lower():
-                my_string = line.rstrip()
-                break
-        my_rect = pygame.Rect((1, 1, 158, 126))
-        rendered_text, noerror = render_textrect(my_string, my_font, my_rect, WHITE, BLACK, 0)
-        if rendered_text:
-            self.screen.blit(rendered_text, my_rect.topleft)
-
-    def update(self):
-        pass
-    
-class B11Screen(State):
-    def __init__(self, screen):
-        State.__init__(self, screen)
-
-        logging.debug('TV Head Status Log')
-
-        self.name = "TVHeadStatusScroll"
-        self.description = "TVHeadend Status Display in scroll"
-        logging.debug('B11 - TVHead')
-        
-    def render(self, screen):
-        my_font = pygame.font.SysFont(None, 14)
-        my_string = "No more log found"
-        i = 0
-        for line in reversed(open("/var/log/syslog").readlines()):
-            if param.TVProcname in line.rstrip().lower():
-                i += 1
-                if i == lump.LineToDisplay:
-                    my_string = line.rstrip()
-                    break
-        if i < lump.LineToDisplay: my_string = "No more log found"
-        my_rect = pygame.Rect((1, 1, 158, 126))
-        rendered_text, noerror = render_textrect(my_string, my_font, my_rect, WHITE, BLACK, 0)
-        if rendered_text:
-            if noerror:
-                pygame.draw.rect(screen, YELLOW, (0,0,160,128), 1)                    
-            else:
-                pygame.draw.rect(screen, RED, (0,0,160,128), 1)                    
-            self.screen.blit(rendered_text, my_rect.topleft)
-
-    def update(self):
-        if  lump.is_B12():
-            lump.LineToDisplay += 1      # display next line from log
-            lump.to_B11(self)
-        elif lump.is_B13():
-            lump.LineToDisplay -= 1      # display next line from log
-            if lump.LineToDisplay < 1: lump.LineToDisplay = 1
-            lump.to_B11(self)        
-    
-    
-class CScreen(State):
-    # Gamestate - run your stuff inside here (maybe another manager?
-    # for your levelmanagment?)
-    def __init__(self, screen):
-        State.__init__(self, screen)
-
-        self.name = "oscam"
-        self.description = "oscam On/Off"
-        logging.debug('B - oscam')        
-
-        self.processing = animation.GIFImage(param.LoadingGIF)
-        self.OscamStatus = check_process(param.OscamProcname)
-        if self.OscamStatus:
-            self.screen.blit(param.oscamon, (0,0) )
-        else:
-            self.screen.blit(param.oscamoff, (0,0) )
-        self.CommandCMD    = None      # to monitor daemon start
-        self.ProcessingCMD = False     # to stay in monitoring process
-        self.TimeCMD       = 0         # timeout for command CMD
-
-    def render(self, screen):
-        if lump.is_Cd():
-            if self.ProcessingCMD:
-                self.processing.render(screen, (5, 11))
-                StatusCMD = self.CommandCMD.poll()
-                if time.time()-self.TimeCMD > 240: # 4m timeout 120s for stopping the service
-                    lump.to_C(self)
-                elif StatusCMD is not None:
-                    logging.debug(param.OscamProcname + ' returned ' + str(StatusCMD))
-                    lump.to_C(self)
-            else:
-                if self.OscamStatus: # now on then switch it off
-                    logging.debug('Oscam - switching OFF'  + param.OscamDaemonStop)
-                    self.CommandCMD = Popen(param.OscamDaemonStop, shell=True)
-                else: # now off then switch it on
-                    logging.debug('Oscam - switching ON ' + param.OscamDaemonStart)
-                    self.CommandCMD = Popen(param.OscamDaemonStart, shell=True)
-                self.ProcessingCMD = True
-                self.TimeCMD = time.time()
-
-    def update(self):
-        pass
-
-class DScreen(State):
-    # Our first state
-    def __init__(self, screen):
-        State.__init__(self, screen)
-
-        self.name = "RPI"
-        self.description = "RPI On/Off"
-        logging.debug('D - RPI')        
-        
-        self.processing = animation.GIFImage(param.LoadingGIF)
-        self.screen.blit(param.rpion, (0,0) )
-
-    def render(self, screen):
-        if lump.is_Dd():
-            self.screen.blit(param.rpioff, (0,0) )
-            if time.time()-lump.starttime < 3: #wait 3 seconds before exiting/shutdowning            
-                self.processing.render(screen, (5, 11))
-            else:
-                if param.RPI_Version is not None: #shutdown only for RPI
-                    command = Popen(param.ShutdonScript)
-                lump.running = False # and exit from teh app
-
-
-    def update(self):
-        pass
-
-#    def handle_events(self,events):
-#        #return handle_all_events(self, events)
-#        return super(AScreen, self).handle_events(events)
-
-'''
-    def handle_events(self,events):
-        # every State has its own eventmanagment
-        for e in events:
-            if e.type == QUIT:
-                logging.debug('Pressed Quit (Window)')
-                return False
-
-            elif e.type == KEYDOWN:
-
-                if e.key == K_ESCAPE:
-                    logging.debug('Pressed Quit (Esc)')
-                    return False
-                # change State if user presses "1"
-                if e.key == K_1:
-                    self.manager.change(IntroState(self.screen))
-                # change State if user presses "3"
-                if e.key == K_3:
-                    self.manager.change(GameState(self.screen))
-        return True
-'''
-
- #   def handle_events(self,events):
- #       return handle_all_events(self, events)
-
 
 class ScreenSaver(State):
     # Gamestate - run your stuff inside here (maybe another manager?
@@ -603,6 +463,75 @@ class ScreenSaver(State):
         pass
 
 
+class XScreen(State):
+    # Our first state
+    def __init__(self, screen):
+        State.__init__(self, screen)
+
+        self.name = "Screen Example"
+        self.description = "whatsoever"
+        logging.debug('Screen Example')
+
+        # A whole Block just to display the Text ...
+        self.font1 = pygame.font.SysFont("Monospaced", 28)
+        self.font2 = pygame.font.SysFont("Monospaced", 30)
+        # Render the text
+        self.text1 = self.font1.render(self.name, True, WHITE, BLACK)
+        self.text2 = self.font2.render(self.description, True, WHITE, RED)
+        # Create Text-rectangles
+        self.text1Rect = self.text1.get_rect()
+        self.text2Rect = self.text2.get_rect()
+
+        # Center the Text-rectangles
+        self.text1Rect.centerx = self.screen.get_rect().centerx
+        self.text1Rect.centery = self.screen.get_rect().centery-20
+
+        self.text2Rect.centerx = self.screen.get_rect().centerx
+        self.text2Rect.centery = self.screen.get_rect().centery+10
+
+    def render(self, screen):
+        # Rendering the State
+        pygame.display.set_caption(self.name +"  "+self.description)
+        screen.fill((20, 20, 20))
+
+        self.screen.blit(self.text1, self.text1Rect)
+        self.screen.blit(self.text2, self.text2Rect)
+
+
+    def update(self):
+        pass
+
+# Events can be also hanled locally - this differes from the Screen A and B !!!
+    def handle_events(self,events):
+        # every State has its own eventmanagment
+
+        if RPI_Version is not None:
+            if not(RotQueue.empty()):
+                m=RotQueue.get_nowait()
+                logging.debug('Processed ' + m)
+                if m == RotaryEncoder.EventLeft:
+                    lump.L(self)
+                elif m == RotaryEncoder.EventRight:
+                    lump.R(self)
+                elif m == RotaryEncoder.EventDown:
+                    lump.D(self)
+                elif m == RotaryEncoder.EventUp:
+                    logging.debug('Done ' + m)                    
+                RotQueue.task_done()
+                self.ScreenSaverElapsed = time.time()
+        
+        for e in events:
+            if e.type == QUIT:
+                print ("Pressed Quit (Window)")
+                return False
+
+            elif e.type == KEYDOWN:
+                if e.key == K_ESCAPE:
+                    print ("Pressed Quit (Esc)")
+                    return False
+                elif e.key == K_LEFT:  lump.L(self)
+                elif e.key == K_RIGHT: lump.R(self)
+        return True
 
 
 # Run the main function

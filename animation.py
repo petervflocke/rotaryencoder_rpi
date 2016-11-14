@@ -1,4 +1,5 @@
 """GIFImage by Matthew Roe"""
+#http://pygame.org/project-GIFImage-1039-1828.html
 
 from PIL import Image
 import pygame

@@ -70,7 +70,7 @@ class settings(object):
                            ['D',   'A',   'Ad' ],
                            ['D',   'D',   'Dd' ],
                            ['D',   'C',   'Cd' ],
-                           ['D',   'S',   'A'  ], # press, left or right leads alsways to the init A screen
+                           ['D',   'S',   'A'  ], # press, left or right leads always to the init A screen
                            ['R',   'S',   'A'  ],
                            ['L',   'S',   'A'  ]
                            ]
