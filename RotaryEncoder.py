@@ -31,7 +31,7 @@ class RotaryEncoderWorker(object):
 
         #Switch
         self.gpio.setup(self.s_pin, self.gpio.IN, pull_up_down=self.gpio.PUD_UP)
-        self.gpio.add_event_detect(self.s_pin, GPIO.BOTH, callback=self.SwitchCall, bouncetime=50)
+        self.gpio.add_event_detect(self.s_pin, GPIO.BOTH, callback=self.SwitchCall, bouncetime=50) # depending on hardware the debouncing can be done by software or hardware here we used software version 
 
         self.SWPrev = 1
 
@@ -67,6 +67,7 @@ class RotaryEncoderWorker(object):
             else: #still pressed
                 pass
 
+    # Inspired by http://guy.carpenter.id.au/gaugette/blog/2013/01/14/rotary-encoder-library-for-the-raspberry-pi/
     # Returns the quadrature encoder state converted into
     # a numerical sequence 0,1,2,3,0,1,2,3...
     #
