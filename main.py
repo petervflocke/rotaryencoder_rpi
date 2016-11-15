@@ -33,7 +33,7 @@ if param.RPI_Version is not None:
     Relay = relay.Relay(param.R_PIN)
     import atexit
     @atexit.register
-    def close_gpio():                                                               # close the gpio port at extit time
+    def close_gpio():                                                               # close the gpio port at exit time
         encoder.Exit()
 
 
