@@ -8,16 +8,16 @@ B_PIN  = 27 #wiring=2 B pin on rotary
 SW_PIN = 22 #wiring=3 press pin on rotary
 
 
-RotQueue = Queue()                                                              # define global que for events
+RotQueue = Queue()                                                              # define global queue for events
 encoder = RotaryEncoder.RotaryEncoderWorker(A_PIN, B_PIN, SW_PIN, RotQueue)     # create a new rotary switch
 
 import atexit
 @atexit.register
-def close_gpio():                                                               # close the gpio port at extit time
+def close_gpio():                                                               # close the gpio ports at exitt time
     encoder.Exit()
 
 def process():
-    
+    # this function can be called in order to decide what is happening with the switch
     while not(RotQueue.empty()):
         m=RotQueue.get_nowait()
         if m == RotaryEncoder.EventLeft:
