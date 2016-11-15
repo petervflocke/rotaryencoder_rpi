@@ -13,7 +13,7 @@ encoder = RotaryEncoder.RotaryEncoderWorker(A_PIN, B_PIN, SW_PIN, RotQueue)     
 
 import atexit
 @atexit.register
-def close_gpio():                                                               # close the gpio ports at exitt time
+def close_gpio():                                                               # close the gpio ports at exit time
     encoder.Exit()
 
 def process():
