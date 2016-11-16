@@ -94,6 +94,7 @@ The [FSMTest.py](https://raw.githubusercontent.com/petervflocke/rotaryencoder_rp
 
  The floachart for the FSM in the menu example can be drawn like this:
  ![FSM Flowchart](https://raw.githubusercontent.com/petervflocke/rpitvheadend/master/res/fsm-test-example.png  "FSM Flowchart")
+ 
 The machine has 6 states
 ```python
 states      = ['A', 'Ad', 'B', 'B01', 'X', 'S']
