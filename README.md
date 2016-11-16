@@ -99,6 +99,27 @@ The machine has 6 states
 ```python
 states      = ['A', 'Ad', 'B', 'B01', 'X', 'S']
 ```
-where: **A**, **B**, **X** and **S** represents 4 states and has own screens definition accordingly: **AScreen**, **BScreen**, **XScreen**, **ScreenSaver**.
+where: **A**, **B**, **X** and **S** represents 4 states and has own screen definitions accordingly: **AScreen**, **BScreen**, **XScreen**, **ScreenSaver**.
 **B01** is another state within **BScreen** where an animated spinner gif is displayed
-**Ad** is just an exit state where the application quits
+**Ad** is just an exit state where the application quits.
+
+The transtions from state to state are defined as follow:
+```python
+# define transition between states
+#                  event,  from_state, to_state
+transitions = [
+                   ['R',   'A',   'B'  ],   # turning knob right change from A to B
+                   ['R',   'B',   'X'  ],   # turning knob right change from B to X
+                   ['R',   'X',   'A'  ],   # turning knob right change from X to A (complete loop)
+                   ['L',   'A',   'X'  ],   # turning knob left  change from A to X
+                   ['L',   'X',   'B'  ],   # turning knob right change from X to B
+                   ['L',   'B',   'A'  ],   # turning knob right change from B to A (complete loop)
+                   ['D',   'B',   'B01'],   # pressing knob down in state B switch to B10
+                   ['D',   'B01', 'B'  ],   # pressing knob down in state B10 switch to B
+                   ['D',   'S',   'A'  ],   # press, turn left, right in screensaver leads always to the A state
+                   ['D',   'A',   'Ad' ],   # press down the A state exits to A01 (state where the application exits)
+                   ['R',   'S',   'A'  ],
+                   ['L',   'S',   'A'  ]
+              ]
+```
+where **R**, **L**, **D**, 

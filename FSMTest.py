@@ -28,7 +28,7 @@ SW_PIN = 22 #wiring=3
 # Define pygame parameters
 # set up some usefull colors
 ScreenSize = (160,128)
-ScrenSaverTime = 60 #in seconds
+ScrenSaverTime = 5 #in seconds
 
 BLACK  =  (  0,   0,   0)
 WHITE  =  (255, 255, 255)
@@ -194,7 +194,7 @@ def main():
 
 class StateMananger(object):
     """
-    The idea of the pygame state management concept is taken from one of the internet articles, nut I don't know where it comes from, any more.
+    The idea of the pygame state management concept is taken from one of the Internet articles, nut I don't know where it comes from, any more.
     If am Author can recognize its code, please contact me, it is my pleasure to add him here 
     """
     
