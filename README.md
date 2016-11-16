@@ -92,9 +92,14 @@ Having [RotaryEncoder.py](https://github.com/petervflocke/rotaryencoder_rpi/blob
 
 The [FSMTest.py](https://raw.githubusercontent.com/petervflocke/rotaryencoder_rpi/master/FSMTest.py) module can be also run without any modification on a regular PC (necessary python and python libraries have to be installed). This allows to develop and test the graphical interface without copying the code each time to the RPI. The cursor keys (Left, Right and Down) are used to "emulate" rotary switch behavior. The keys work also on RPI.
 
-graph TD;
-    A-->B;
-    A-->C;
-    B-->D;
-    C-->D;
- 
+ graph TB
+         subgraph one
+         a1-->a2
+         end
+         subgraph two
+         b1-->b2
+         end
+         subgraph three
+         c1-->c2
+         end
+         c1-->a2
