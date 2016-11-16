@@ -115,9 +115,7 @@ if RPI_Version is not None:
 
 class Matter(object):
     def __init__(self):
-        self.starttime = 0
         self.running = True
-        self.LineToDisplay = 0
     
 # Define changing the pygame state manager based on the above finite state machine
        
@@ -203,9 +201,10 @@ class StateMananger(object):
     # Statemanager manages States, loads the first state in the
     # constructor and has a option to print things out
     def __init__(self, screen):
-        # on constructions change to our first state
         logging.debug('Init StateManager')
+        # on constructions change to our first state
         self.change(AScreen(screen))
+
 
     def change(self, state):
         # the new self.state is our passed state
@@ -438,25 +437,6 @@ class BScreen(State):
     def update(self):
         pass
 
-class ScreenSaver(State):
-    # Gamestate - run your stuff inside here (maybe another manager?
-    # for your levelmanagment?)
-    def __init__(self, screen):
-        State.__init__(self, screen)
-
-        self.name = "screensaver"
-        self.description = "after given time switch everything to black"
-        logging.debug('0 - Screen Saver')        
-
-        self.screen.fill(BLACK)
-        
-    def render(self, screen):
-        pass
-
-    def update(self):
-        pass
-
-
 class XScreen(State):
     # Our first state
     def __init__(self, screen):
@@ -536,6 +516,27 @@ class XScreen(State):
             lump.T(self)              
                                         
         return True      
+
+
+class ScreenSaver(State):
+    # Gamestate - run your stuff inside here (maybe another manager?
+    # for your levelmanagment?)
+    def __init__(self, screen):
+        State.__init__(self, screen)
+
+        self.name = "screensaver"
+        self.description = "after given time switch everything to black"
+        logging.debug('0 - Screen Saver')        
+
+        self.screen.fill(BLACK)
+        
+    def render(self, screen):
+        pass
+
+    def update(self):
+        pass
+
+
 
 # Run the main function
 if __name__ == "__main__":

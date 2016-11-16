@@ -127,11 +127,12 @@ transitions = [
 where **R**, **L**, **D** are the events / trigers from Rotary knob switch.
 **T** event / trigger is activated on an elapsed time defined for screen saver time out.
 
-The class **Matter** controlls switching pygame Screens, using transtion callbacks. Every transition has 'before' and 'after' attributes that contain a list of methods to call before and after the transition executes. Here is used **on_enter_**StateName. State names in this example are A, B, X, S, Ad and B01
+The class **Matter** controlls switching pygame Screens, using transtion callbacks. Every transition has 'before' and 'after' attributes that contain a list of methods to call before and after the transition executes. Here is used **on_enter_**StateName. State names in this example are A, B, X, S, Ad and B01. 
 ```python
     def on_enter_A(self, st):
         st.manager.change(AScreen(st.screen))
 ```
+
 Each screen can have its own event handling if neccessary - for example to deal with check boxes, radio buttons, etc, located on this particular screen, or whatever the reason can be. For an example of a local event handling refer to **XScreen** class and the method: `handle_events`
 
 
