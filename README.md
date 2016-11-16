@@ -95,7 +95,9 @@ The [FSMTest.py](https://raw.githubusercontent.com/petervflocke/rotaryencoder_rp
  The floachart for the FSM in the menu example can be drawn like this:
  ![FSM Flowchart](https://raw.githubusercontent.com/petervflocke/rpitvheadend/master/res/fsm-test-example.png  "FSM Flowchart")
  
-The machine has 6 states
+This example and main menu application utilises a perfect FSM python implemenation. For details please refer to: https://github.com/tyarkoni/transitions#-transitions
+
+The machine in the above example has 6 states
 ```python
 states      = ['A', 'Ad', 'B', 'B01', 'X', 'S']
 ```
@@ -125,8 +127,11 @@ transitions = [
 where **R**, **L**, **D** are the events / trigers from Rotary knob switch.
 **T** event / trigger is activated on an elapsed time defined for screen saver time out.
 
-The class **Matter** controlls switching from
-
+The class **Matter** controlls switching pygame Screens, using transtion callbacks. Every transition has 'before' and 'after' attributes that contain a list of methods to call before and after the transition executes. Here is used **on_enter_**StateName. State name in this example are A, B, X, S, Ad and B01
+```python
+    def on_enter_A(self, st):
+        st.manager.change(AScreen(st.screen))
+```
 
 Each screen can have its own event handling if neccessary - for example to deal with check boxes, radio buttons, etc, located on this particular screen, or whatever the reason can be. An example of a local event handling is the **XScreen**
 
