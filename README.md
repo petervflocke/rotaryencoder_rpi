@@ -125,7 +125,7 @@ transitions = [
               ]
 ```
 where **R**, **L**, **D** are the events / trigers from Rotary knob switch.
-**T** event / trigger is activated on an elapsed time defined for screen saver time out.
+**T** event / trigger is activated on an elapsed time defined for screen saver timeout.
 
 The class **Matter** controlls switching pygame Screens, using transtion callbacks. Every transition has 'before' and 'after' attributes that contain a list of methods to call before and after the transition executes. Here is used **on_enter_**StateName. State names in this example are A, B, X, S, Ad and B01. 
 ```python
