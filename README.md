@@ -91,3 +91,10 @@ In this module a finite-state machine (FSM) controls the logical flow of the scr
 Having [RotaryEncoder.py](https://github.com/petervflocke/rotaryencoder_rpi/blob/master/RotaryEncoder.py) and a [LCD Display](https://github.com/petervflocke/rpitvheadend#prepare-display) integrated with the menu system  provides a ready to use local "graphical" interface for any Raspberry PI application.
 
 The [FSMTest.py](https://raw.githubusercontent.com/petervflocke/rotaryencoder_rpi/master/FSMTest.py) module can be also run without any modification on a regular PC (necessary python and python libraries have to be installed). This allows to develop and test the graphical interface without copying the code each time to the RPI. The cursor keys (Left, Right and Down) are used to "emulate" rotary switch behavior. The keys work also on RPI.
+
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
+ 
