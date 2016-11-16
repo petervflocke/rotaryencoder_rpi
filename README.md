@@ -117,7 +117,7 @@ transitions = [
                    ['D',   'B',   'B01'],   # pressing knob down in state B switch to B10
                    ['D',   'B01', 'B'  ],   # pressing knob down in state B10 switch to B
                    ['D',   'S',   'A'  ],   # press, turn left, right in screensaver leads always to the A state
-                   ['D',   'A',   'Ad' ],   # press down the A state exits to A01 (state where the application exits)
+                   ['D',   'A',   'Ad' ],   # press down the A state exits to Ad (state where the application exits)
                    ['R',   'S',   'A'  ],
                    ['L',   'S',   'A'  ],
                    ['T',   'A',   'S'  ],   # Screen saver works only in states A and B, for all other states (X, B01, Ad) cannot be activated  
