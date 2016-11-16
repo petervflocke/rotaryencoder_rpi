@@ -28,7 +28,8 @@ SW_PIN = 22 #wiring=3
 # Define pygame parameters
 # set up some usefull colors
 ScreenSize = (160,128)
-ScrenSaverTime = 120 #in seconds
+ScrenSaverTime = 60 #in seconds
+
 BLACK  =  (  0,   0,   0)
 WHITE  =  (255, 255, 255)
 RED    =  (255,   0,   0)
@@ -61,7 +62,7 @@ transitions = [
                    ['D',   'A',   'Ad' ],   # press down the A state exits to A01 (state where the application exits)
                    ['R',   'S',   'A'  ],
                    ['L',   'S',   'A'  ]
-                   ]
+              ]
 
 
 def pi_version():

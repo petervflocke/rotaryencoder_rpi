@@ -92,14 +92,12 @@ Having [RotaryEncoder.py](https://github.com/petervflocke/rotaryencoder_rpi/blob
 
 The [FSMTest.py](https://raw.githubusercontent.com/petervflocke/rotaryencoder_rpi/master/FSMTest.py) module can be also run without any modification on a regular PC (necessary python and python libraries have to be installed). This allows to develop and test the graphical interface without copying the code each time to the RPI. The cursor keys (Left, Right and Down) are used to "emulate" rotary switch behavior. The keys work also on RPI.
 
- graph TB
-         subgraph one
-         a1-->a2
-         end
-         subgraph two
-         b1-->b2
-         end
-         subgraph three
-         c1-->c2
-         end
-         c1-->a2
+ The floachart for the FSM in the menu example can be drawn like this:
+ ![FSM Flowchart](https://raw.githubusercontent.com/petervflocke/rpitvheadend/master/res/fsm-test-example.png  "FSM Flowchart")
+The machine has 6 states
+```python
+states      = ['A', 'Ad', 'B', 'B01', 'X', 'S']
+```
+where: **A**, **B**, **X** and **S** represents 4 states and has own screens definition accordingly: **AScreen**, **BScreen**, **XScreen**, **ScreenSaver**.
+**B01** is another state within **BScreen** where an animated spinner gif is displayed
+**Ad** is just an exit state where the application quits
