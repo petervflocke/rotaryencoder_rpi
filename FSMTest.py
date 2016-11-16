@@ -61,7 +61,9 @@ transitions = [
                    ['D',   'S',   'A'  ],   # press, turn left, right in screensaver leads always to the A state
                    ['D',   'A',   'Ad' ],   # press down the A state exits to A01 (state where the application exits)
                    ['R',   'S',   'A'  ],
-                   ['L',   'S',   'A'  ]
+                   ['L',   'S',   'A'  ],
+                   ['T',   'A',   'S'  ],   # Screen saver works only in states A and B, for all other states (X, B01, Ad) cannot be activated  
+                   ['T',   'B',   'S'  ]
               ]
 
 
@@ -258,7 +260,8 @@ class State(object):
                 elif m == RotaryEncoder.EventDown:
                     lump.D(self)
                 elif m == RotaryEncoder.EventUp:
-                    logging.debug('Done ' + m)                    
+                    logging.debug('Up ' + m)
+                    pass # event "U" has to be processed but doesn't change anything
                 RotQueue.task_done()
                 self.ScreenSaverElapsed = time.time()
         
@@ -284,12 +287,13 @@ class State(object):
                 self.ScreenSaverElapsed = time.time()
         if not(lump.is_S()) and (time.time() - self.ScreenSaverElapsed > ScrenSaverTime): # if not already in Screensaver and time to save passed 
             logging.debug(' => screen saver')
-            lump.to_S(self)              
+            lump.T(self)
+         
                                         
         return True      
 
-# I recommend loading those classes from another
-# file/module so you don't die a painful death... but for the sake of example let keep all in one file
+# I recommend loading those classes from another file/module so you don't die a painful death... 
+# but for the sake of example let keep all in one file
 
 class AScreen(State):
 
@@ -322,20 +326,9 @@ class AScreen(State):
         self.cur_sent = 0 
         self.cur_recv = 0 
         
-        # draw on the surface object
-        #self.screen.fill(BLACK)
-
-        # A whole Block just to display the Text ...
-        #self.SmallFont1 = pygame.font.SysFont(None, self.TSize1)
         self.SmallFont1 = pygame.font.Font(fontpath, 12)
         self.SF1Y = self.SmallFont1.size("X")[1]+2
         
-        # Render the text
-        #self.THeader1 = self.BigFont1.render('   TVHeadEnd Server   ', True, WHITE, LBLUE)
-        #self.RHeader1 = self.THeader1.get_rect()
-        #self.RHeader1.centerx = self.screen.get_rect().centerx
-        #self.RHeader1.y  = 0
-                           
     def render(self, screen):
         # Rendering the State
         if time.time() - self.t0 > 4:
@@ -401,7 +394,7 @@ class AScreen(State):
         self.screen.blit(TNES,  RNES)
         self.screen.blit(TNER,  RNER)
 
-        if lump.is_Ad():
+        if lump.is_Ad():         # This is the exit state - change the flag to exit main pygame loop
             lump.running = False
     
     def update(self):
@@ -492,20 +485,15 @@ class XScreen(State):
 
     def render(self, screen):
         # Rendering the State
-        pygame.display.set_caption(self.name +"  "+self.description)
-        screen.fill((20, 20, 20))
-
+        screen.fill(BLACK)
         self.screen.blit(self.text1, self.text1Rect)
         self.screen.blit(self.text2, self.text2Rect)
-
 
     def update(self):
         pass
 
 # Events can be also handled locally if needed - this differs from the Screen A and B !!!
-    def handle_events(self,events):
-        # every State has its own eventmanagment
-
+    def handle_events(self, events):
         if RPI_Version is not None:
             if not(RotQueue.empty()):
                 m=RotQueue.get_nowait()
@@ -517,23 +505,37 @@ class XScreen(State):
                 elif m == RotaryEncoder.EventDown:
                     lump.D(self)
                 elif m == RotaryEncoder.EventUp:
-                    logging.debug('Done ' + m)                    
+                    logging.debug('Up ' + m)
+                    pass # event "U" has to be processed but doesn't change anything
                 RotQueue.task_done()
                 self.ScreenSaverElapsed = time.time()
         
         for e in events:
             if e.type == QUIT:
-                print ("Pressed Quit (Window)")
+                logging.debug('Pressed Quit (in a window mode)')
                 return False
-
+    
             elif e.type == KEYDOWN:
                 if e.key == K_ESCAPE:
-                    print ("Pressed Quit (Esc)")
+                    logging.debug('Pressed ESC for quitting')
                     return False
-                elif e.key == K_LEFT:  lump.L(self)
-                elif e.key == K_RIGHT: lump.R(self)
-        return True
-
+                # change State if user presses "2"
+                elif e.key == K_LEFT:
+                    #st.manager.change(AScreen(st.screen))
+                    lump.L(self)
+                elif e.key == K_RIGHT:
+                    #st.manager.change(BScreen(st.screen))
+                    lump.R(self)
+                elif e.key == K_DOWN:
+                    #st.manager.change(BScreen(st.screen))
+                    lump.D(self)
+                self.ScreenSaverElapsed = time.time()
+        if not(lump.is_S()) and (time.time() - self.ScreenSaverElapsed > ScrenSaverTime): # if not already in Screensaver and time to save passed 
+            logging.debug(' => screen saver')
+            #lump.to_S(self)
+            lump.T(self)              
+                                        
+        return True      
 
 # Run the main function
 if __name__ == "__main__":

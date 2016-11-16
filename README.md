@@ -122,4 +122,14 @@ transitions = [
                    ['L',   'S',   'A'  ]
               ]
 ```
-where **R**, **L**, **D**, 
+where **R**, **L**, **D** are the events / trigers from Rotary knob switch.
+**T** event / trigger is activated on an elapsed time defined for screen saver time out.
+
+The class **Matter** controlls switching from
+
+
+Each screen can have its own event handling if neccessary - for example to deal with check boxes, radio buttons, etc, located on this particular screen, or whatever the reason can be. An example of a local event handling is the **XScreen**
+
+```python
+
+```
