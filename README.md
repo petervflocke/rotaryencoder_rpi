@@ -105,8 +105,6 @@ where: **A**, **B**, **X** and **S** represents 4 states and has own screen defi
 
 The transtions from state to state are defined as follow:
 ```python
-# define transition between states
-#                  event,  from_state, to_state
 transitions = [
                    ['R',   'A',   'B'  ],   # turning knob right change from A to B
                    ['R',   'B',   'X'  ],   # turning knob right change from B to X
@@ -119,7 +117,9 @@ transitions = [
                    ['D',   'S',   'A'  ],   # press, turn left, right in screensaver leads always to the A state
                    ['D',   'A',   'Ad' ],   # press down the A state exits to A01 (state where the application exits)
                    ['R',   'S',   'A'  ],
-                   ['L',   'S',   'A'  ]
+                   ['L',   'S',   'A'  ],
+                   ['T',   'A',   'S'  ],   # Screen saver works only in states A and B, for all other states (X, B01, Ad) cannot be activated  
+                   ['T',   'B',   'S'  ]
               ]
 ```
 where **R**, **L**, **D** are the events / trigers from Rotary knob switch.
