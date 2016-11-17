@@ -5,12 +5,15 @@
 - Rotary switch test program
 - pygame menu system based on a finite-state machine (FSM)
 
-**Note**
+>**Note**
+
 >In order to run any of the three above mentioned applications on the Raspberry PI hardware (RPI) it is necessary to install a rotary encoder knob / switch device and/or a LCD screen. [Check the hardware part for details](https://github.com/petervflocke/rpitvheadend#1-hardware).
 
 ###Install
-**Note**
-> Assumption you use the newest jessie raspian version.
+
+>**Note**
+
+> Assumption: you use the newest jessie raspian version.
 
 If not yet done install necessary python libraries:
 - transitions, a lightweight, object-oriented finite state machine implementation in Python
@@ -47,7 +50,8 @@ A_PIN  = 17 #wiring=0 A pin on rotary
 B_PIN  = 27 #wiring=2 B pin on rotary 
 SW_PIN = 22 #wiring=3 press pin on rotary
 ```
-**Note**
+>**Note**
+
 > Use **GPIO numbers BCM**, not pin numbers or WiringPi numbers.
 > For details refer to [Wiring Pi](http://wiringpi.com/pins/) 
 
