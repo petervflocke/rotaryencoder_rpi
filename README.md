@@ -139,8 +139,8 @@ The class **Matter** controlls switching pygame Screens, using transtion callbac
 
 Each screen can have its own event handling if neccessary - for example to deal with check boxes, radio buttons, etc, located on this particular screen, or whatever the reason can be. For an example of a local event handling refer to **XScreen** class and the method: `handle_events`
 
-###Main menu some details
-The main graphical application  `main.py` program, which controlls the tvheadend and oscam services, can be run as a pi user by:
+###Main graphical application configuration details
+The main graphical application  `main.py`, which controlls the tvheadend and oscam services, can be run as a pi user by:
 
 	sudo python ~/menu/main.py 
 
@@ -150,7 +150,7 @@ In the file `settings.py`following parameters can be configured:
 
 ```python
         self.ScreenSize = (160,128)     # size of the lcd screen for pygame module
-        self.ScrenSaverTime = 60        # in seconds
+        self.ScrenSaverTime = 60        # timeout to activate the screeservers state (in seconds)
         
         # define 3 pins A/B + switc in BCM GPIO mode for the rotary encoder A/B Pin + Switch   
         self.A_PIN  = 17 #wiring=0
@@ -163,8 +163,8 @@ In the file `settings.py`following parameters can be configured:
         self.TVProcname       = "tvheadend"       # name of the service, which will be checked via psutil on the process list to find out if the servise is up and running
         self.OscamProcname    = "oscam"           # same for oscam
         self.TVDaemonStart    = "/usr/bin/sudo /etc/init.d/tvheadend start"  # command to start the tvheadend service
-        self.TVDaemonStop     = "/usr/bin/sudo /etc/init.d/tvheadend stop" # command to stop the tvheadend service
-        self.OscamDaemonStart = "/usr/bin/sudo /etc/init.d/oscam start"  # same for oscam
+        self.TVDaemonStop     = "/usr/bin/sudo /etc/init.d/tvheadend stop"   # command to stop the tvheadend service
+        self.OscamDaemonStart = "/usr/bin/sudo /etc/init.d/oscam start"      # same for oscam
         self.OscamDaemonStop  = "/usr/bin/sudo /etc/init.d/oscam stop"
 ```
 Check the comments for details.
