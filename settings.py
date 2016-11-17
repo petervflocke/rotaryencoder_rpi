@@ -10,8 +10,8 @@ class settings(object):
         # define screen site - here it is SainSmart 1.8" TFT Farb LCD Schirm Modul mit SPI Interface
         # SainSmart 1.8" TFT Farb LCD Schirm Modul mit SPI Interface
         # see: https://github.com/notro/fbtft/wiki
-        self.ScreenSize = (160,128)
-        self.ScrenSaverTime = 60 #in seconds
+        self.ScreenSize = (160,128)     # size of the lcd screen for pygame module
+        self.ScrenSaverTime = 60        # in seconds
         
         # define 3 pins A/B + switc in BCM GPIO mode for the rotary encoder A/B Pin + Switch   
         
