@@ -149,7 +149,7 @@ The main graphical application  `main.py`, which controlls the tvheadend and osc
 
 	sudo python ~/menu/main.py 
 
-or
+or to leave the application running in bacground:
 
 	sudo python ~/menu/main.py > /dev/null 2>&1&
 
