@@ -139,7 +139,7 @@ The class **Matter** controlls switching pygame Screens, using transtion callbac
 
 Each screen can have its own event handling if neccessary - for example to deal with check boxes, radio buttons, etc, located on this particular screen, or whatever the reason can be. For an example of a local event handling refer to **XScreen** class and the method: `handle_events`
 
-All this together results in a sequence of screens you can switch by turning the rotary knob (or user keyboard cursor kyes) or change on other eevent e.g. screen timeout.
+All this together results in a sequence of screens you can switch by turning the rotary knob (or user keyboard cursor kyes) or change on other event e.g. screen timeout.
 
 ![Test App Screen](https://raw.githubusercontent.com/petervflocke/rpitvheadend/master/res/TestScreen.gif  "Test App Screen")
 &nbsp;
