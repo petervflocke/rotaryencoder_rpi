@@ -1,6 +1,6 @@
 ## Local user interface via LCD and rotary knob
 
-###Content:
+### Content:
 - Complete application to control tvheadserver and oscam servers
 - Rotary switch test program
 - pygame menu system based on a finite-state machine (FSM)
@@ -9,7 +9,7 @@
 
 >In order to run any of the three above mentioned applications on the Raspberry PI hardware (RPI) it is necessary to install a rotary encoder knob / switch device and/or a LCD screen. [Check the hardware part for details](https://github.com/petervflocke/rpitvheadend#1-hardware).
 
-###Install
+### Install
 
 >**Note**
 
@@ -144,7 +144,7 @@ All this together results in a sequence of screens you can switch by turning the
 ![Test App Screen](https://raw.githubusercontent.com/petervflocke/rpitvheadend/master/res/TestScreen.gif  "Test App Screen")
 &nbsp;
 &nbsp;
-###Main graphical application configuration details
+### Main graphical application configuration details
 The main graphical application  `main.py`, which controlls the tvheadend and oscam services, can be run as a pi user by:
 
 	sudo python ~/menu/main.py 
@@ -155,7 +155,7 @@ or to leave the application running in bacground:
 
 &nbsp;	
 
-####Application configuration:
+#### Application configuration:
 
 In the file `settings.py`following parameters can be configured:
 
